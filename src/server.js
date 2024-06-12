@@ -9,6 +9,8 @@ import express from "express"
 import cors from "cors"
 import mongoose from "mongoose"
 import userRoutes from "./routes/user.route.js"
+import donationRoutes from "./routes/donation.route.js";
+
 
 
 const app = express();
@@ -21,7 +23,7 @@ app.use(express.urlencoded({extended:true, limit:'50mb'}));
 
 // Routes
 app.use('/api/v1/users', userRoutes);
-// app.use('/api/v1/donations',);
+app.use('/api/v1/donations',donationRoutes);
 
 app.use((err, req, res, next)=>{
     console.error(err);
