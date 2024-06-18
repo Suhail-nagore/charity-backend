@@ -3,6 +3,9 @@ import Donation from "../models/donation.model.js";
 import User from "../models/user.model.js";
 import sendEmail from "../utils/sendmail.js";
 import Stripe from "stripe";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -29,11 +32,11 @@ const createDonation = async (req, res)=>{
 
 const donationWebhook = async (req, res)=>{
     const sig=req.headers['stripe-signature'];
-
+    const payload = req.body;
     let event;
 
     try {
-        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        event = stripe.webhooks.constructEvent(payload, sig, process.env.STRIPE_WEBHOOK_SECRET);
 
     } catch (error) {
         return res.status(400).send(`webhook Error: ${error.message}`);
@@ -41,7 +44,9 @@ const donationWebhook = async (req, res)=>{
     }
     if (event.type==='payment_intent.succeeded'){
         const paymentIntent=event.data.object;
+        console.log('PaymentIntent details:', paymentIntent);
         const user = await User.findById(req.user._id);
+        console.log('Found user:', user);
 
         if(user){
             const donation = new Donation({
@@ -51,6 +56,7 @@ const donationWebhook = async (req, res)=>{
             });
 
             await donation.save();
+            console.log('Saved donation:', donation);
 
             await sendEmail(user.email, 'Donation Receipt', `Thank you for your donation of $ ${paymentIntent.amount/100}.`);
 
